@@ -13,6 +13,7 @@ extern const string kGrammarDefaultLanguage;
 
 class Config;
 class GramDb;
+class KenlmModel;
 struct GrammarConfig;
 class OctagramComponent;
 
@@ -34,12 +35,14 @@ class OctagramComponent : public Grammar::Component {
   OctagramComponent();
   virtual ~OctagramComponent();
 
-  Octagram* Create(Config* config) override;
+  Grammar* Create(Config* config) override;
 
   GramDb* GetDb(const string& language);
+  KenlmModel* GetKenlmModel(const string& model_path);
 
  private:
   map<string, the<GramDb>> db_by_language_;
+  map<string, std::unique_ptr<KenlmModel>> kenlm_by_model_path_;
 };
 
 }  // namespace rime

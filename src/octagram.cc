@@ -1,5 +1,7 @@
 #include "gram_db.h"
 #include "gram_encoding.h"
+#include "kenlm_grammar.h"
+#include "kenlm_model.h"
 #include "octagram.h"
 #include <algorithm>
 #include <rime/config.h>
@@ -8,6 +10,26 @@
 #include <utf8.h>
 
 namespace rime {
+
+enum class GrammarBackend {
+  kOctagram,
+  kKenlm,
+};
+
+inline static GrammarBackend resolve_backend(Config* config) {
+  if (!config) {
+    return GrammarBackend::kOctagram;
+  }
+  string backend;
+  if (config->GetString("grammar/type", &backend) && backend == "kenlm") {
+    return GrammarBackend::kKenlm;
+  }
+  string model_path;
+  if (config->GetString("grammar/model_path", &model_path) && !model_path.empty()) {
+    return GrammarBackend::kKenlm;
+  }
+  return GrammarBackend::kOctagram;
+}
 
 struct GrammarConfig {
   int collocation_max_length = 4;
@@ -165,7 +187,10 @@ OctagramComponent::OctagramComponent() {}
 
 OctagramComponent::~OctagramComponent() {}
 
-Octagram* OctagramComponent::Create(Config* config) {
+Grammar* OctagramComponent::Create(Config* config) {
+  if (resolve_backend(config) == GrammarBackend::kKenlm) {
+    return new KenlmGrammar(config, this);
+  }
   return new Octagram(config, this);
 }
 
@@ -181,6 +206,18 @@ GramDb* OctagramComponent::GetDb(const string& language) {
       return nullptr;
     }
     loaded = std::move(db);
+  }
+  return loaded.get();
+}
+
+KenlmModel* OctagramComponent::GetKenlmModel(const string& model_path) {
+  auto& loaded = kenlm_by_model_path_[model_path];
+  if (!loaded) {
+    loaded = std::make_unique<KenlmModel>(model_path);
+    if (!loaded->Load()) {
+      loaded.reset();
+      return nullptr;
+    }
   }
   return loaded.get();
 }
