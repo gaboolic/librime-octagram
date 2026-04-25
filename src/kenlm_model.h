@@ -1,6 +1,7 @@
 #ifndef RIME_KENLM_MODEL_H_
 #define RIME_KENLM_MODEL_H_
 
+#include <memory>
 #include <rime/common.h>
 
 namespace rime {
@@ -33,7 +34,7 @@ class KenlmModel {
 
 #ifdef RIME_OCTAGRAM_ENABLE_KENLM
   class Impl;
-  unique_ptr<Impl> impl_;
+  std::unique_ptr<Impl> impl_;
 #endif
 };
 

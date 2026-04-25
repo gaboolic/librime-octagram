@@ -1,6 +1,7 @@
 #include "kenlm_model.h"
 
 #include <algorithm>
+#include <memory>
 
 #ifdef RIME_OCTAGRAM_ENABLE_KENLM
 #include <lm/model.hh>
@@ -66,7 +67,7 @@ class KenlmModel::Impl {
   }
 
  private:
-  unique_ptr<lm::base::Model> model_;
+  std::unique_ptr<lm::base::Model> model_;
   const lm::base::Vocabulary* vocab_ = nullptr;
 };
 

@@ -21,6 +21,8 @@ if not defined KENLM_ROOT (
 )
 if defined KENLM_ROOT (
   if exist "%KENLM_ROOT%\bin\build_binary.exe" set "BUILD_BINARY_EXE=%KENLM_ROOT%\bin\build_binary.exe"
+  if exist "%KENLM_ROOT%\build-clang64\bin\build_binary.exe" set "BUILD_BINARY_EXE=%KENLM_ROOT%\build-clang64\bin\build_binary.exe"
+  if exist "%KENLM_ROOT%\build-msvc\bin\Release\build_binary.exe" set "BUILD_BINARY_EXE=%KENLM_ROOT%\build-msvc\bin\Release\build_binary.exe"
   if exist "%KENLM_ROOT%\build\bin\Release\build_binary.exe" set "BUILD_BINARY_EXE=%KENLM_ROOT%\build\bin\Release\build_binary.exe"
   if exist "%KENLM_ROOT%\build\bin\build_binary.exe" set "BUILD_BINARY_EXE=%KENLM_ROOT%\build\bin\build_binary.exe"
 )

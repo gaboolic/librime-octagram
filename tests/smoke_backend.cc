@@ -2,11 +2,27 @@
 #include "octagram.h"
 
 #include <cmath>
+#include <filesystem>
 #include <rime/config.h>
 #include <iostream>
 #include <memory>
 
 using namespace rime;
+
+namespace {
+
+std::string ResolveKenlmModelPath(int argc, char** argv) {
+  if (argc > 1) {
+    return argv[1];
+  }
+  const char* kLocalModelPath = "E:\\模型文件\\moqi-arpa.binary";
+  if (std::filesystem::exists(kLocalModelPath)) {
+    return kLocalModelPath;
+  }
+  return "missing.binary";
+}
+
+}  // namespace
 
 int main(int argc, char** argv) {
   OctagramComponent component;
@@ -21,14 +37,15 @@ int main(int argc, char** argv) {
 
   Config kenlm_config;
   kenlm_config.SetString("grammar/type", "kenlm");
-  kenlm_config.SetString("grammar/model_path", argc > 1 ? argv[1] : "missing.binary");
+  const std::string model_path = ResolveKenlmModelPath(argc, argv);
+  kenlm_config.SetString("grammar/model_path", model_path);
   std::unique_ptr<Grammar> kenlm(component.Create(&kenlm_config));
   if (!kenlm || !dynamic_cast<KenlmGrammar*>(kenlm.get())) {
     std::cerr << "failed to create kenlm backend\n";
     return 1;
   }
 
-  if (argc > 1) {
+  if (model_path != "missing.binary") {
     GrammarContext context{"", {"moqi", "input"}};
     const double score = kenlm->Query(context, "method", true);
     if (!std::isfinite(score)) {

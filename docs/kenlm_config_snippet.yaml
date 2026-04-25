@@ -1,0 +1,6 @@
+grammar:
+  type: kenlm
+  model_path: "E:/模型文件/moqi-arpa.binary"
+  use_bos_eos: true
+  oov_penalty: -20.0
+  no_grammar_penalty: -13.815510557964274

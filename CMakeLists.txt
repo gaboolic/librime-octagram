@@ -17,6 +17,7 @@ endif()
 
 option(BUILD_TOOLS "Build tools" ON)
 option(ENABLE_KENLM "Enable KenLM backend" ON)
+set(KENLM_MAX_ORDER 6 CACHE STRING "Maximum supported ngram order for embedded KenLM headers")
 
 set(KENLM_ROOT_DIR "" CACHE PATH "Path to KenLM installation or build tree")
 if(NOT KENLM_ROOT_DIR AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../kenlm/CMakeLists.txt")
@@ -29,6 +30,7 @@ set(octagram_plugin_deps ${rime_library})
 set(KENLM_FOUND FALSE)
 unset(KENLM_INCLUDE_DIR)
 unset(KENLM_LIBRARY)
+unset(KENLM_UTIL_LIBRARY)
 unset(GLOG_LIBRARY)
 
 if(NOT rime_library)
@@ -71,7 +73,23 @@ if(NOT rime_library)
 endif()
 
 if(ENABLE_KENLM)
-  find_package(kenlm CONFIG QUIET)
+  set(KENLM_CONFIG_HINTS)
+  if(KENLM_ROOT_DIR)
+    list(APPEND KENLM_CONFIG_HINTS
+      "${KENLM_ROOT_DIR}/build-msvc"
+      "${KENLM_ROOT_DIR}/build"
+      "${KENLM_ROOT_DIR}")
+  endif()
+  set(KENLM_TARGETS_FILE)
+  foreach(_kenlm_hint ${KENLM_CONFIG_HINTS})
+    if(EXISTS "${_kenlm_hint}/kenlmTargets.cmake")
+      set(KENLM_TARGETS_FILE "${_kenlm_hint}/kenlmTargets.cmake")
+      break()
+    endif()
+  endforeach()
+  if(KENLM_TARGETS_FILE)
+    find_package(kenlm CONFIG QUIET HINTS ${KENLM_CONFIG_HINTS})
+  endif()
   if(kenlm_FOUND)
     set(KENLM_FOUND TRUE)
   elseif(KENLM_ROOT_DIR)
@@ -84,12 +102,24 @@ if(ENABLE_KENLM)
       NAMES kenlm
       PATHS
         "${KENLM_ROOT_DIR}/lib"
+        "${KENLM_ROOT_DIR}/build-msvc/lib/Release"
+        "${KENLM_ROOT_DIR}/build-msvc/lib"
+        "${KENLM_ROOT_DIR}/build-msvc/bin/Release"
         "${KENLM_ROOT_DIR}/build/lib"
         "${KENLM_ROOT_DIR}/build/lib/Release"
         "${KENLM_ROOT_DIR}/build/lm/Release"
         "${KENLM_ROOT_DIR}/build/Release"
         "${KENLM_ROOT_DIR}/build/bin")
-    if(KENLM_INCLUDE_DIR AND KENLM_LIBRARY)
+    find_library(KENLM_UTIL_LIBRARY
+      NAMES kenlm_util
+      PATHS
+        "${KENLM_ROOT_DIR}/lib"
+        "${KENLM_ROOT_DIR}/build-msvc/lib/Release"
+        "${KENLM_ROOT_DIR}/build-msvc/lib"
+        "${KENLM_ROOT_DIR}/build/lib"
+        "${KENLM_ROOT_DIR}/build/lib/Release"
+        "${KENLM_ROOT_DIR}/build/Release")
+    if(KENLM_INCLUDE_DIR AND KENLM_LIBRARY AND KENLM_UTIL_LIBRARY)
       set(KENLM_FOUND TRUE)
     endif()
   endif()
@@ -128,6 +158,7 @@ endif()
 
 if(KENLM_FOUND)
   target_compile_definitions(rime-octagram-objs PRIVATE RIME_OCTAGRAM_ENABLE_KENLM=1)
+  target_compile_definitions(rime-octagram-objs PRIVATE KENLM_MAX_ORDER=${KENLM_MAX_ORDER})
   if(kenlm_FOUND)
     if(TARGET kenlm::kenlm)
       get_target_property(KENLM_IMPORTED_INCLUDE_DIRS kenlm::kenlm INTERFACE_INCLUDE_DIRECTORIES)
@@ -144,7 +175,7 @@ if(KENLM_FOUND)
     endif()
   else()
     target_include_directories(rime-octagram-objs PRIVATE ${KENLM_INCLUDE_DIR})
-    list(APPEND octagram_plugin_deps ${KENLM_LIBRARY})
+    list(APPEND octagram_plugin_deps ${KENLM_LIBRARY} ${KENLM_UTIL_LIBRARY})
   endif()
 else()
   message(STATUS "KenLM support disabled or not found; only legacy octagram backend will be available.")
