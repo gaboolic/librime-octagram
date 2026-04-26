@@ -21,8 +21,12 @@ inline static GrammarBackend resolve_backend(Config* config) {
     return GrammarBackend::kOctagram;
   }
   string backend;
-  if (config->GetString("grammar/type", &backend) && backend == "kenlm") {
-    return GrammarBackend::kKenlm;
+  if (config->GetString("grammar/type", &backend) && !backend.empty()) {
+    return backend == "kenlm" ? GrammarBackend::kKenlm : GrammarBackend::kOctagram;
+  }
+  string language;
+  if (config->GetString("grammar/language", &language) && !language.empty()) {
+    return GrammarBackend::kOctagram;
   }
   string model_path;
   if (config->GetString("grammar/model_path", &model_path) && !model_path.empty()) {

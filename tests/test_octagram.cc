@@ -146,6 +146,22 @@ TEST_F(OctagramTest, ComponentCreateKenlmBackend) {
   }
 }
 
+TEST_F(OctagramTest, ComponentCreateLegacyOctagramWhenLanguageIsSet) {
+  Config config;
+  config.SetString("grammar/language", "zh-moqi.gram");
+  config.SetString("grammar/model_path", "legacy-or-other-model-path");
+  config.SetDouble("grammar/non_collocation_penalty", -4.0);
+
+  Grammar* grammar = component_->Create(&config);
+  EXPECT_NE(grammar, nullptr);
+  EXPECT_NE(dynamic_cast<Octagram*>(grammar), nullptr);
+  EXPECT_EQ(dynamic_cast<KenlmGrammar*>(grammar), nullptr);
+
+  if (grammar) {
+    delete grammar;
+  }
+}
+
 // Test OctagramComponent GetDb method
 // Note: This test requires proper resource resolver setup
 // which may not be available in unit test environment
